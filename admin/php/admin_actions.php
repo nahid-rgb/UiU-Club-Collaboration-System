@@ -1,0 +1,91 @@
+<?php
+require_once('admin_functions.php');
+require_once '../../assets/php/send_code.php';
+
+if(isset($_GET['login'])){
+    if(checkAdminUser($_POST)['status']){
+        $_SESSION['admin_auth']=checkAdminUser($_POST)['user_id'];
+     header('Location:../');
+    }else{
+$_SESSION['error']=[
+    "field"=>"useraccess",
+    "msg"=>"Incorrect email/password",
+];
+     header('Location:../');
+    }
+}
+if(isset($_GET['logout'])){
+session_destroy();
+header('Location:../');
+
+}
+if(isset($_GET['updateprofile'])){
+    if(updateAdmin($_POST)){
+        $_SESSION['error']=[
+            "field"=>"adminprofile",
+            "msg"=>"profile update successfully !",
+        ];
+     header('Location:../?edit_profile');
+    }else{
+        $_SESSION['error']=[
+            "field"=>"adminprofile",
+            "msg"=>"something went wrong, try again later",
+        ];
+     header('Location:../?edit_profile');
+    }
+}
+
+if(isset($_GET['userlogin']) && isset($_SESSION['admin_auth'])){
+
+  
+    $response=loginUserByAdmin($_GET['userlogin']);
+    
+  
+    if($response['status']){
+     $_SESSION['Auth'] = true;
+     $_SESSION['userdata'] = $response['user'];
+
+     if($response['user']['ac_status']==0){
+     $_SESSION['code']=$code = rand(111111,999999);
+     sendCode($response['user']['email'],'Verify Your Email',$code);
+     }
+
+     header("location:../../");
+
+    }
+        
+    }
+
+    if(isset($_GET['deletepost'])){
+        $post_id = $_GET['deletepost'];
+          if(deletePost($post_id)){
+              header("location:{$_SERVER['HTTP_REFERER']}");
+          }else{
+              echo "something went wrong";
+          }
+      
+        
+      }
+    if(isset($_GET['createCLubs'])){
+
+    $response=validateClubUpdateForm($_POST,$_FILES['profile_pic']);
+
+    if($response['status']){
+        
+        if(createClubs($_POST,$_FILES['profile_pic'])){
+            header("location:../../?groups");
+
+        }else{
+            echo "something is wrong";
+        }
+        
+    
+    }else{
+        $_SESSION['error']=$response;
+        header("location:../../?groups");
+    }
+         
+    }
+
+
+?>
